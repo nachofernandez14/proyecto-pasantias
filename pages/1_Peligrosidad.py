@@ -9,40 +9,7 @@ from streamlit_folium import st_folium
 
 st.set_page_config(page_title="Robos y hurtos en argentina", layout='wide')
 
-st.markdown(
-    """
-    <style>
-    .reportview-container .main .block-container{
-        padding-top: 5rem;
-        padding-right: 5rem;
-        padding-left: 5rem;
-        padding-bottom: 5rem;
-    }
-    .reportview-container .main {
-        color: #555;
-        background-color: #f0f2f6;
-    }
-    .css-1d3f9p6 {
-        padding-top: 1rem;
-        padding-right: 1rem;
-        padding-left: 1rem;
-        padding-bottom: 1rem;
-    }
-    .footer {
-        width: 100%;
-        background-color: #f0f2f6;
-        text-align: center;
-        padding: 10px 0;
-        font-size: 14px;
-        color: #555;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+
 
 @st.cache_data
 def load_data():
@@ -201,19 +168,7 @@ st.markdown("""
 </h1>
 """, unsafe_allow_html=True)
 st.subheader(f"**Año seleccionado:** {anio_seleccionado}")
-st_folium(mapa, width=1300, height=650, key="mapa_delitos", returned_objects=[])
+st_folium(mapa,width=1400, height=800, key="mapa_delitos", returned_objects=[])
 # Footer con HTML y CSS
 
-st.markdown(
-    """
-    <div class="footer">
-        © 2025 Ignacio Fernandez - Todos los derechos reservados
-        <br>
-        <a href="https://github.com/ignacio-fernandez" target="_blank">GitHub</a>
-        <br>
-        <a href="https://www.argentina.gob.ar/seguridad/estadisticascriminales/bases-de-datos" target="_blank">Fuente de los datos obtenidos para realizar los mapas</a>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
 
