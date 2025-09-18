@@ -94,8 +94,12 @@ gdf['provincia_norm'] = gdf['provincia'].apply(normalizar_textos)
 df_robos_hurtos_sumados["departamento_nombre"] = df_robos_hurtos_sumados['departamento_nombre'].apply(normalizar_textos)
 df_robos_hurtos_sumados["provincia_nombre"] = df_robos_hurtos_sumados['provincia_nombre'].apply(normalizar_textos)
 
-años = list(df['anio'].unique())
-anio_seleccionado = st.sidebar.selectbox("Seleccione un año", años)
+anios = list(df_robos_hurtos_sumados['anio'].unique())
+anio_seleccionado = st.selectbox(
+    "Selecciona un año:",
+    options=anios, # Reemplaza con tus años
+    index=0
+)
 
 #Filtramos el dataframe por un año
 df_robos_hurtos_sumados = df_robos_hurtos_sumados[df_robos_hurtos_sumados['anio'] == anio_seleccionado]
