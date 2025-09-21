@@ -171,5 +171,43 @@ if st.session_state.page == 'mapa_dep_censal':
     </h1>
     """, unsafe_allow_html=True)
     st.subheader("Seleccione un departamento en el mapa para ver su censo de pobreza")
+    
+    gdf = gpd.read_file('departamentos/pxdptodatosok.shp')
+    gdf = gdf.to_crs(epsg=4326)
+    st.session_state.mapa_cords = gdf.total_bounds
+    st.session_state.departamentos_gdf = gdf
+
+    mapa = folium.Map(location=[-32.8908, -64.5730], zoom_start=6)
+
+    geo_json = folium.GeoJson(
+        gdf.__geo_interface__,
+        name='Departamentos',
+        style_function=lambda x: {'fillColor': 'gray', 'color': 'black', 'weight': 1, 'fillOpacity': 0.5},
+        tooltip=folium.GeoJsonTooltip(fields=['departamen'], aliases=['Departamento:']),
+    )
+    geo_json.add_to(mapa)
+
+    output = st_folium(
+        mapa,
+        width=1400,
+        height=800,
+        key="mapa_pobreza_dep",
+        feature_group=geo_json 
+    )
+
+    if output and output.get("last_object_clicked"):
+        clicked_json = output["last_object_clicked"]
+        if 'properties' in clicked_json:
+            clicked_properties = clicked_json['properties']
+            print(clicked_properties)
+        else:
+            print('no existe properties')
+
+       
+        
+ 
 
 
+    
+
+    
