@@ -167,42 +167,130 @@ if st.session_state.page == 'mapa_dep_censal':
     st.button("Volver al mapa departamental", key="volver", on_click=volver)
     st.markdown("""
     <h1 style='color: #000A5C; font-family: Arial; text-align: left;'>
-    📊 Datos de pobreza por departamento según censo 2025
+    📊 Datos de pobreza por provincia (zona censal) según censo 2025
     </h1>
     """, unsafe_allow_html=True)
-    st.subheader("Seleccione un departamento en el mapa para ver su censo de pobreza")
+    st.subheader("Seleccione una provincia para ver su censo de pobreza")
     
-    gdf = gpd.read_file('departamentos/pxdptodatosok.shp')
-    gdf = gdf.to_crs(epsg=4326)
-    st.session_state.mapa_cords = gdf.total_bounds
-    st.session_state.departamentos_gdf = gdf
-
-    mapa = folium.Map(location=[-32.8908, -64.5730], zoom_start=6)
-
-    geo_json = folium.GeoJson(
-        gdf.__geo_interface__,
-        name='Departamentos',
-        style_function=lambda x: {'fillColor': 'gray', 'color': 'black', 'weight': 1, 'fillOpacity': 0.5},
-        tooltip=folium.GeoJsonTooltip(fields=['departamen'], aliases=['Departamento:']),
+    gdf = gpd.read_file('shp_radio_censal/radios2022_v1.0.shp')
+    print(gdf.info())
+    provincias = gdf['NOMPROV'].drop_duplicates()
+    provincia_seleccionada = st.selectbox(
+        "Seleccione una provincia: ",
+        provincias
     )
-    geo_json.add_to(mapa)
+    gdf_provincia = gdf[gdf['NOMPROV'] == provincia_seleccionada]
+    center_lat = gdf_provincia.geometry.union_all().centroid.y
+    center_lon = gdf_provincia.geometry.union_all().centroid.x
 
-    output = st_folium(
-        mapa,
-        width=1400,
-        height=800,
-        key="mapa_pobreza_dep",
-        feature_group=geo_json 
+    df_1 = pd.read_csv('csv/RADIOS SHEET FINAL_data.csv', encoding='utf-8', sep=';')
+
+    df_pobreza_radial = df_1[['Código de radio','Departamento','Nivel de incidencia de pobreza crónica', 'Provincia']]
+
+    df_pobreza_radial = df_pobreza_radial.rename(columns={
+        'Código de radio': 'radio_codigo',
+        'Departamento': 'departamento_nombre',
+        'Nivel de incidencia de pobreza crónica': 'pobreza_cronica_nivel',
+        'Provincia': 'provincia_nombre'
+    })
+
+    def normalizar_textos(s):
+        if pd.isna(s):
+            return ""
+        s = s.lower()
+        s = "".join(
+            c for c in unicodedata.normalize("NFD", s)
+            if unicodedata.category(c) != "Mn"
+        )
+        # Quitar espacios dobles
+        s = " ".join(s.split())
+        return s
+
+
+    df_pobreza_radial['departament_norm'] = df_pobreza_radial['departamento_nombre'].apply(normalizar_textos)
+    df_pobreza_radial['provincia_nombre'] = df_pobreza_radial['provincia_nombre'].apply(normalizar_textos)
+    gdf_provincia['provincia_norm'] = gdf_provincia['NOMPROV'].apply(normalizar_textos)
+
+    correcciones_bsas = {
+        'partidos del agba': 'buenos aires',
+        'ciudad de buenos aires': 'caba',
+        'buenos aires (sin agba)': 'buenos aires',
+        'provincia de buenos aires': 'buenos aires',
+        'provincia de buenos aires (sin agba)': 'buenos aires',
+        'ciudad autonoma de buenos aires': 'caba'
+
+    }
+    df_pobreza_radial['provincia_nombre'] = df_pobreza_radial['provincia_nombre'].replace(correcciones_bsas)
+    gdf_provincia['provincia_norm'] = gdf_provincia['provincia_norm'].replace(correcciones_bsas)
+        
+    gdf_provincia['LINK'] = gdf_provincia['LINK'].astype(str)
+    df_pobreza_radial['radio_codigo'] = df_pobreza_radial['radio_codigo'].astype(str)
+
+    gdf_provincia = gdf_provincia.merge(
+        df_pobreza_radial,
+        left_on=['LINK', 'provincia_norm'],
+        right_on=['radio_codigo', 'provincia_nombre'],
+        how='left'
     )
 
-    if output and output.get("last_object_clicked"):
-        clicked_json = output["last_object_clicked"]
-        if 'properties' in clicked_json:
-            clicked_properties = clicked_json['properties']
-            print(clicked_properties)
-        else:
-            print('no existe properties')
+    mapeo_pobreza = {
+        'Muy bajo (0 - 0,99%)': 0.5,
+        'Bajo (1 - 4,99%)': 3.0,
+        'Moderado (5 - 9,99%)': 7.5,
+        'Alto (10 - 14,99%)': 12.5,
+        'Muy alto (15 - 24,99%)': 20.0,
+        'Crítico (25 - 100%)': 37.5
+    }
+    gdf_provincia['pobreza_cronica_nivel'] = gdf_provincia['pobreza_cronica_nivel'].map(mapeo_pobreza)
+    df_pobreza_radial['pobreza_cronica_nivel'] = df_pobreza_radial['pobreza_cronica_nivel'].map(mapeo_pobreza)
 
+    mapa = folium.Map(location=[center_lat,center_lon], zoom_start=5)
+
+    colores = ['#1a9850', '#91cf60', '#d9ef8b', '#fee08b', '#fc8d59', '#d73027']
+
+    def style_function(pobreza):
+        cant_pobreza = pobreza['properties'].get('pobreza_cronica_nivel')
+        if cant_pobreza is None:
+            return {'fillColor': '#808080', 'color': 'black', 'weight': 1, 'fillOpacity': 0.7}
+        try:
+            cant_pobreza=float(cant_pobreza)
+        except (ValueError, TypeError):
+            return {'fillColor': '#808080', 'color': 'black', 'weight': 1, 'fillOpacity': 0.7}
+
+        if 0 <= cant_pobreza <= 1:
+            idx = 0
+        elif 1 < cant_pobreza <= 5:
+            idx = 1
+        elif 5 < cant_pobreza <= 10:
+            idx = 2
+        elif 10 < cant_pobreza <= 15:
+            idx = 3
+        elif 15 < cant_pobreza <= 25:
+            idx = 4
+        elif 25 < cant_pobreza <= 100:
+            idx = 5
+        
+        return {
+            'fillColor': colores[idx],
+            'color': 'black',
+            'weight': 1,
+            'fillOpacity': 0.7
+        }
+    folium.GeoJson(
+        gdf_provincia.__geo_interface__,
+        style_function=style_function,
+        tooltip=GeoJsonTooltip(
+            fields=['LINK', 'provincia_norm','departament_norm', 'pobreza_cronica_nivel'],
+            aliases=['Codigo censal:', 'Provincia:', 'Departamento:', 'Indice de pobreza:'],
+            localize=True
+        )
+    ).add_to(mapa)
+
+    st_folium(mapa,width=1400, height=800,key="mapa_pobreza_dep", returned_objects=[])
+
+    
+
+    
        
         
  
