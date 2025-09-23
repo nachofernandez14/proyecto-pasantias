@@ -189,14 +189,33 @@ if st.session_state.page == 'mapa_peligrosidad':
     st.button("Ver graficos estadísticos", on_click=change_page)
 
 if st.session_state.page == 'grafico_estadist':
+    
     @st.cache_data
     def load_data():
         return pd.read_csv("csv/snic-departamentos-anual.csv", sep=';', encoding='utf-8', low_memory=False)
 
     df = load_data()
+    
+    st.markdown(
+        """ 
+            <style>
+            .st-emotion-cache-ig7yu6{
+                background-color: #F0F0F0 !important;
+                border-radius: 10px !important;
+                
+            }
+            .st-emotion-cache-wfksaw{
+                margin: 10px !important;
+                width: 95% !important;
+            }
+            
+            </style>
+        """,unsafe_allow_html=True
+    )
+
     st.markdown("""
     <h1 style='color: #333333; font-family: Calibri; text-align: left; font-size: 31px;'>
-    🗺️ Gráfico estadistico de peligrosidad
+    📈 Gráfico estadistico de peligrosidad
     </h1>
     """, unsafe_allow_html=True)
     provincias = df['provincia_nombre'].drop_duplicates()
@@ -204,24 +223,46 @@ if st.session_state.page == 'grafico_estadist':
         "Seleccione una provincia: ",
         provincias
     )
-    df_provincia_selec = df[df['provincia_nombre']==provincia_seleccionada][['']]
-    #Funcion para normalizar los textos y eliminar espacios, tildes y dejar todo en mayusc
-    def normalizar_textos(s):
-        if pd.isna(s):
-            return ""
-        s = s.lower()
-        s = "".join(
-            c for c in unicodedata.normalize("NFD", s)
-            if unicodedata.category(c) != "Mn"
+    df = df[df['cod_delito'].isin([15, 16, 19, 20])]
+    df = df.loc[df['provincia_nombre'] == provincia_seleccionada].copy()
+    df = df.groupby(['anio'], as_index=False)['cantidad_hechos'].sum()
+    
+    col1, col2 = st.columns([4,1])
+
+    anios = df['anio'].unique()
+    x_data = df['anio']
+    y_data = df['cantidad_hechos']
+
+    año_mas_delitos = df.loc[df['cantidad_hechos'].idxmax()]['anio']
+    cantidad_maximo_delitos = df.loc[df['cantidad_hechos'].idxmax()]['cantidad_hechos']
+    with col1:
+
+        fig, ax = plt.subplots(figsize=(14, 8))
+        ax.bar(x_data, y_data)
+        ax.set_title(f'Cantidad de robos y hurtos en {provincia_seleccionada}')
+        ax.set_xticks(anios)
+        ax.tick_params(axis='x', rotation=45)
+        ax.set_xlabel('Años')
+        ax.set_ylabel('Cantidad de robos/hurtos')
+        fig.tight_layout()
+        
+        st.pyplot(fig)
+    with col2:
+        st.header('Información estadística')
+        st.markdown(
+            f"Año con mayores robos/hurtos en la provincia de {provincia_seleccionada}: **{año_mas_delitos}**"
         )
-        # Quitar espacios dobles
-        s = " ".join(s.split())
-        return s
+        st.markdown(
+            f"Mayor cantidad de robos/hurtos en la provincia de {provincia_seleccionada}: **{cantidad_maximo_delitos}**"
+        )
+        
+        
+        
 
-    #Cargamos el mapa
-    gdf = gpd.read_file("departamentos/pxdptodatosok.shp")
+    
+    
 
-    #Nos quedamos acas
+    
 
 
     
