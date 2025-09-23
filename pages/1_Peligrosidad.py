@@ -218,17 +218,20 @@ if st.session_state.page == 'grafico_estadist':
     📈 Gráfico estadistico de peligrosidad
     </h1>
     """, unsafe_allow_html=True)
+    #Seleccionamos la provincia
     provincias = df['provincia_nombre'].drop_duplicates()
     provincia_seleccionada = st.selectbox(
         "Seleccione una provincia: ",
         provincias
     )
+    #Filtramos el dataframe
     df = df[df['cod_delito'].isin([15, 16, 19, 20])]
     df = df.loc[df['provincia_nombre'] == provincia_seleccionada].copy()
     df = df.groupby(['anio'], as_index=False)['cantidad_hechos'].sum()
     
+    #Creamos columnas en streamlit
     col1, col2 = st.columns([4,1])
-
+    #Creamos la x e y en el grafico
     anios = df['anio'].unique()
     x_data = df['anio']
     y_data = df['cantidad_hechos']
@@ -236,9 +239,9 @@ if st.session_state.page == 'grafico_estadist':
     año_mas_delitos = df.loc[df['cantidad_hechos'].idxmax()]['anio']
     cantidad_maximo_delitos = df.loc[df['cantidad_hechos'].idxmax()]['cantidad_hechos']
     with col1:
-
+        #Creamos el grafico, necesitamos crearlo con 2 variables, fig y ax, fig
         fig, ax = plt.subplots(figsize=(14, 8))
-        ax.bar(x_data, y_data)
+        ax.plot(x_data, y_data)
         ax.set_title(f'Cantidad de robos y hurtos en {provincia_seleccionada}')
         ax.set_xticks(anios)
         ax.tick_params(axis='x', rotation=45)
