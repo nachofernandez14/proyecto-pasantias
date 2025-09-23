@@ -29,11 +29,16 @@ Esta aplicación interactiva te permite explorar la distribución de robos y hur
 # Sección de créditos
 st.subheader("Acerca de esta aplicación")
 st.info("""
-**Desarrollado por:** Ignacio Fernandez  
+**Desarrollado por:** Ignacio Fernandez 
+        
+**Tutor:** Facundo Mendez 
+        
 **Año:** 2025 
         
 **Fuente de los datos:**     
 [Ministerio de Seguridad de la Nación](https://www.argentina.gob.ar/seguridad/estadisticascriminales/bases-de-datos)      
-[Ministerio de Defensa CAPAS SIG](https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG)
+[Ministerio de Defensa CAPAS SIG](https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG)   
+[CIPEC](https://www.cippec.org/)     
+[Datos Abietos PBA](https://catalogo.datos.gba.gob.ar/dataset/radios-censales/archivo)
         
 """)
