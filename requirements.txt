@@ -6,3 +6,4 @@ streamlit_folium
 matplotlib
 ipykernel
 seaborn
+

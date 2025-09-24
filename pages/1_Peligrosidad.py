@@ -92,9 +92,7 @@ if st.session_state.page == 'mapa_peligrosidad':
     )
 
     #Filtramos el dataframe por un año
-    df_robos_hurtos_sumados = df_robos_hurtos_sumados[df_robos_hurtos_sumados['anio'] == 2024]
-
-
+    df_robos_hurtos_sumados = df_robos_hurtos_sumados[df_robos_hurtos_sumados['anio'] == anio_seleccionado]
 
     #Mergeamos el gdf con el data frame, haciendo coincidir los departamentos con las provincias
     gdf = gdf.merge(
@@ -135,6 +133,8 @@ if st.session_state.page == 'mapa_peligrosidad':
 
     # Quitar los None porque no tienen match geográfico
     df_robos_hurtos_sumados = df_robos_hurtos_sumados.dropna(subset=['departamento_nombre'])
+
+
 
     # # Generamos un mapa con el numero de delitos por departamento
     #Creamos el mapa

@@ -108,7 +108,7 @@ if st.session_state.page == 'mapa_pobreza_dep':
     }
     gdf['nivel_pobreza'] = gdf['Nivel de incidencia de pobreza crónica'].map(mapeo_pobreza)
     df_pobreza['nivel_pobreza'] = df_pobreza['Nivel de incidencia de pobreza crónica'].map(mapeo_pobreza)
-    df_pobreza.to_csv('csv/df_pobreza_dep.csv', index=False)
+
     #Creamos el mapa
     mapa = folium.Map(location=[-38.0, -63.0], zoom_start=5)
 
